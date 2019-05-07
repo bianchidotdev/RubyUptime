@@ -83,7 +83,6 @@ for checkOption in checkOptions
 end
 
 def eval_checks checks
-    Logging.reopen
     t = Time.now.utc.to_f
     evaluatedChecks = []
     conn = Faraday::Connection.new() do |c|
@@ -107,6 +106,7 @@ def eval_checks checks
 end
 
 def log_checks t, checks
+    logger = init_logger
     checks.each do |check|
         logger.info "#{Time.at(check.last_time).utc} - #{check.name} - #{check.resps[t].status} - #{check.resps[t].body} - #{Time.at(check.next_time).utc}"
         # p check.resps[t]
