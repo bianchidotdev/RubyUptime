@@ -2,4 +2,5 @@
 source "https://rubygems.org"
 
 gem 'faraday'
-grem 'typhoeus'
+gem 'typhoeus'
+gem 'concurrent-ruby', require: 'concurrent'

@@ -1,0 +1,14 @@
+checks: 
+  - name: testland-dev
+    host: config.lab.testland.auth0.com
+    frequency: 1
+  - name: testland-dev-1
+    host: config.lab-1.testland.auth0.com
+
+checkDefaults:
+  protocol: https
+  frequency: 10
+  endpoint: /testall
+  successCriteria:
+    status: 200
+    body: OK
