@@ -5,9 +5,10 @@ require 'date'
 require 'yaml'
 
 require 'faraday'
+require 'faraday_middleware'
 require 'typhoeus/adapters/faraday'
 
-require 'logging'
+require 'semantic_logger'
 
 # TODO move to networked DB
 options = (YAML.load_file 'checks.yaml')
@@ -21,21 +22,50 @@ DEFAULT_CHECK_FREQUENCY = defaultOptions["frequency"] || 10
 DEFAULT_CHECK_PROTOCOL = defaultOptions["protocol"] || "https"
 DEFAULT_CHECK_ENDPOINT = defaultOptions["endpoint"] || "/testall"
 
-def init_logger
-    logger = Logging.logger['simple_uptime_logger']
-    logger.level = :info
+def init_logger logger_name
+  SemanticLogger.default_level = :trace
+  SemanticLogger.add_appender(file_name: 'development.log', level: :info, formatter: :color)
+  SemanticLogger.add_appender(io: $stdout, level: :debug, formatter: :color)
 
-    logger.add_appenders \
-        Logging.appenders.stdout,
-        Logging.appenders.file('example.log')
+  logger = SemanticLogger[logger_name]
+  
+    # Logging.color_scheme( 'bright',
+    #     :levels => {
+    #         :info  => :green,
+    #         :warn  => :yellow,
+    #         :error => :red,
+    #         :fatal => [:white, :on_red]
+    #     },
+    #     :date => :blue,
+    #     :logger => :cyan,
+    #     :message => :magenta
+    # )
+    # Logging.appenders.stdout(
+    #   'stdout',
+    #   :level  => :debug,
+    #   :layout => Logging.layouts.pattern(
+    #     :color_scheme => 'bright'
+    #   )
+    # )
+
+    # Logging.appenders.rolling_file(
+    #   'example.log',
+    #   :level  => :info,
+    #   :layout => Logging.layouts.json
+    # )
+
+    # logger = Logging.logger[logger_name]
+
+    # logger.add_appenders 'stdout', 'example.log'
     return logger
 end
 
-$logger = init_logger
+$logger = init_logger 'simple_uptime_logger'
 
 class InitializationInvalidError < StandardError; end
 
 class Check
+  include SemanticLogger::Loggable
     attr_accessor :next_time, :last_time, :resps
     attr_reader :frequency, :name, :uri
     
@@ -86,6 +116,7 @@ def eval_checks checks
     t = Time.now.utc.to_f
     evaluatedChecks = []
     conn = Faraday::Connection.new() do |c|
+        # c.use :instrumentation
         c.adapter :typhoeus
     end
 
@@ -113,7 +144,7 @@ def log_checks t, checks
     end
 end
 
-$logger.info "Log Time - Check Name - Check Status - Check Body - Next Check Due Time"
+$logger.info "Check Time - Check Name - Check Status - Check Body - Next Check Due Time"
 
 threads = Hash.new()
 while true
