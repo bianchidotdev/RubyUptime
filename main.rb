@@ -7,7 +7,7 @@ require 'yaml'
 require 'faraday'
 require 'typhoeus/adapters/faraday'
 
-require 'logger'
+require 'logging'
 
 # TODO move to networked DB
 options = (YAML.load_file 'checks.yaml')
@@ -31,7 +31,7 @@ def init_logger
     return logger
 end
 
-logger = init_logger
+$logger = init_logger
 
 class InitializationInvalidError < StandardError; end
 
@@ -41,7 +41,7 @@ class Check
     
     def initialize options={}
         if !options["name"] || !options["host"]
-            p "Required information missing. Ignoring check: #{options}"
+            $logger.warn "Required information missing. Ignoring check: #{options}"
             @valid = false
             return
         end
@@ -106,15 +106,14 @@ def eval_checks checks
 end
 
 def log_checks t, checks
-    logger = init_logger
     checks.each do |check|
-        logger.info "#{Time.at(check.last_time).utc} - #{check.name} - #{check.resps[t].status} - #{check.resps[t].body} - #{Time.at(check.next_time).utc}"
+        $logger.info "#{Time.at(check.last_time).utc} - #{check.name} - #{check.resps[t].status} - #{check.resps[t].body} - #{Time.at(check.next_time).utc}"
         # p check.resps[t]
         check.remove_resp(t)
     end
 end
 
-logger.info "Log Time - Check Name - Check Status - Check Body - Next Check Due Time"
+$logger.info "Log Time - Check Name - Check Status - Check Body - Next Check Due Time"
 
 threads = Hash.new()
 while true
