@@ -4,6 +4,7 @@ checks:
     frequency: 1
   - name: testland-dev-1
     host: config.lab-1.testland.auth0.com
+  - host: config.lab-2.testland.auth0.com
 
 checkDefaults:
   protocol: https

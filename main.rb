@@ -7,48 +7,54 @@ require 'yaml'
 require 'faraday'
 require 'typhoeus/adapters/faraday'
 
-# TODO move to yaml or DynamoDB
+require 'logger'
+
+# TODO move to networked DB
 options = (YAML.load_file 'checks.yaml')
 
 checkOptions = options["checks"]
 defaultOptions = options["checkDefaults"]
 
+
+# Set defaults
 DEFAULT_CHECK_FREQUENCY = defaultOptions["frequency"] || 10
 DEFAULT_CHECK_PROTOCOL = defaultOptions["protocol"] || "https"
 DEFAULT_CHECK_ENDPOINT = defaultOptions["endpoint"] || "/testall"
 
-# checkOptions = [
-#     {
-#         :name => "testland-dev",
-#         :host => "config.lab.testland.auth0.com",
-#         :endpoint => "/testall",
-#         :protocol => "https",
-#         :frequency => 1,
-#     },
-#     {
-#         :name => "testland-dev-1",
-#         :host => "config.lab-1.testland.auth0.com",
-#         :endpoint => "/testall",
-#         :protocol => "https",
-#         #:frequency => 10,
-#     }
-# ]
+def init_logger
+    logger = Logging.logger['simple_uptime_logger']
+    logger.level = :info
+
+    logger.add_appenders \
+        Logging.appenders.stdout,
+        Logging.appenders.file('example.log')
+    return logger
+end
+
+logger = init_logger
+
+class InitializationInvalidError < StandardError; end
 
 class Check
     attr_accessor :next_time, :last_time, :resps
     attr_reader :frequency, :name, :uri
-
+    
     def initialize options={}
-        # if not options["name"] && not options["host"] do
-        #     p "Required information missing. Ignoring check: #{options}"
-        #     return
-        # end
+        if !options["name"] || !options["host"]
+            p "Required information missing. Ignoring check: #{options}"
+            @valid = false
+            return
+        end
 
         @name = options["name"]
         @uri = Faraday::Utils::URI("#{options["protocol"] || DEFAULT_CHECK_PROTOCOL}://#{options["host"]}#{options["endpoint"] || DEFAULT_CHECK_ENDPOINT}")
         @next_time = Time.now.utc.to_f
         @frequency = options["frequency"]
         @resps = Hash.new()
+    end
+
+    def valid?
+        return @valid != false
     end
 
     def eval conn
@@ -73,10 +79,11 @@ end
 checks = []
 for checkOption in checkOptions
     check = Check.new checkOption
-    checks << check
+    checks << check if check.valid?
 end
 
 def eval_checks checks
+    Logging.reopen
     t = Time.now.utc.to_f
     evaluatedChecks = []
     conn = Faraday::Connection.new() do |c|
@@ -101,11 +108,13 @@ end
 
 def log_checks t, checks
     checks.each do |check|
-        p "#{Time.at(check.last_time)} - #{check.name} - #{check.resps[t].status} - #{check.resps[t].body} - #{Time.at(check.next_time)}"
+        logger.info "#{Time.at(check.last_time).utc} - #{check.name} - #{check.resps[t].status} - #{check.resps[t].body} - #{Time.at(check.next_time).utc}"
         # p check.resps[t]
         check.remove_resp(t)
     end
 end
+
+logger.info "Log Time - Check Name - Check Status - Check Body - Next Check Due Time"
 
 threads = Hash.new()
 while true
