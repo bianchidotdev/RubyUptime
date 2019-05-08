@@ -1,5 +1,5 @@
 # Ruby Simple Uptime
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
 gem 'semantic_logger'
 # gem 'activesupport'
