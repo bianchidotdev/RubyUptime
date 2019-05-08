@@ -42,17 +42,27 @@ class Check
   attr_reader :frequency, :name, :uri
 
   def initialize(options = {})
-    if !options['name'] || !options['host']
-      logger.warn "Required information missing. Ignoring check: #{options}"
-      @valid = false
-      return
-    end
-
-    @name = options['name']
+    self.name = options['name']
     @uri = gen_uri options
     @next_time = Time.now.utc.to_f
     @frequency = options['frequency'] || DEFAULT_CHECK_FREQUENCY
     @resps = {}
+  rescue ArgumentError => e
+    logger.warn "Error creating check. Ignoring: #{e}"
+    @valid = false
+    nil
+  end
+
+  def name=(name)
+    raise ArgumentError.new('No name provided') unless name
+
+    @name = name
+  end
+
+  def host=(host)
+    raise ArgumentError.new('No host provided') unless host
+
+    @host = host
   end
 
   def valid?
@@ -76,18 +86,24 @@ class Check
   end
 
   private
+
   def gen_uri(options)
-    protocol = options['protocol'] || DEFAULT_CHECK_PROTOCOL
     host = options['host']
+    raise ArgumentError('No host provided') unless host
+
+    protocol = options['protocol'] || DEFAULT_CHECK_PROTOCOL
     endpoint = options['endpoint'] || DEFAULT_CHECK_ENDPOINT
     Faraday::Utils::URI("#{protocol}://#{host}#{endpoint}")
   end
 end
 
-checks = []
-check_options.each do |check_option|
-  check = Check.new check_option
-  checks << check if check.valid?
+def create_checks(check_options)
+  checks = []
+  check_options.each do |check_option|
+    check = Check.new check_option
+    checks << check if check.valid?
+  end
+  checks
 end
 
 def eval_check(check, logger)
@@ -113,11 +129,11 @@ end
 def log_check(time, check, duration, logger)
   logger.info(
     "#{Time.at(check.last_time).utc} - \
-    #{check.name} - \
-    #{check.resps[time].status} - \
-    #{check.resps[time].body} - \
-    #{Time.at(check.next_time).utc} - \
-    #{duration.round(3)}s"
+#{check.name} - \
+#{check.resps[time].status} - \
+#{check.resps[time].body} - \
+#{Time.at(check.next_time).utc} - \
+#{duration.round(3)}s"
   )
   check.remove_resp(time)
 end
@@ -126,6 +142,8 @@ logger.info(
   'Check Time - Check Name - Check Status - Check Body - Next Check Due Time - \
   Duration'
 )
+
+checks = create_checks(check_options)
 
 threads = {}
 loop do
