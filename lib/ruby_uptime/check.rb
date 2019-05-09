@@ -66,11 +66,11 @@ class Check
       # p self.reqs[time][:resp]
       logger.info(
         "#{Time.at(self.last_time).utc} - \
-  #{self.name} - \
-  #{self.reqs[time][:resp].status} - \
-  #{self.reqs[time][:resp].body} - \
-  #{Time.at(self.next_time).utc} - \
-  #{self.reqs[time][:duration].round(3)}s"
+#{self.name} - \
+#{self.reqs[time][:resp].status} - \
+#{self.reqs[time][:resp].body} - \
+#{Time.at(self.next_time).utc} - \
+#{self.reqs[time][:duration].round(3)}s"
       )
     end
   

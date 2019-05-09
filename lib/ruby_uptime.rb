@@ -17,7 +17,7 @@ require_relative 'ruby_uptime/check'
 def init_logger(logger_name)
   SemanticLogger.default_level = :trace
   SemanticLogger.add_appender(
-    file_name: 'development.log', level: :info, formatter: :color
+    file_name: '../development.log', level: :info, formatter: :json
   )
   SemanticLogger.add_appender(
     io: $stdout, level: :debug, formatter: :color
