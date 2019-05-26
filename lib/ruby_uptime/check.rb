@@ -1,7 +1,17 @@
+require 'semantic_logger'
+require 'faraday'
+
 class Check
+
   include SemanticLogger::Loggable
   attr_accessor :last_time
   attr_reader :next_time, :name, :uri, :reqs
+
+  # set defaults
+  @@DEFAULT_CHECK_FREQUENCY = ENV['DEFAULT_CHECK_FREQUENCY'] || 10
+  @@DEFAULT_CHECK_PROTOCOL = ENV['DEFAULT_CHECK_PROTOCOL'] || 'https'
+  @@DEFAULT_CHECK_ENDPOINT = ENV['DEFAULT_CHECK_ENDPOINT'] || '/testall'
+  @@DEFAULT_CHECK_TIMEOUT = ENV['DEFAULT_CHECK_TIMEOUT'] || '10'
 
   def self.log_header
     logger.info(
@@ -14,7 +24,7 @@ Duration"
     self.name = options['name']
     @uri = gen_uri options
     @next_time = Time.now.utc.to_f
-    @frequency = options['frequency'] || DEFAULT_CHECK_FREQUENCY
+    @frequency = options['frequency'] || @@DEFAULT_CHECK_FREQUENCY
     @reqs = {}
   rescue ArgumentError => e
     logger.warn "Error creating check. Ignoring: #{e}"
@@ -66,7 +76,7 @@ Duration"
     name = self.name
     last_time = Time.at(self.last_time).utc
     next_time = Time.at(self.next_time).utc
-    response = self.reqs[time]
+    response = self.reqs[time][:resp]
     status = response.status
     body = response.body
     duration = self.reqs[time][:duration]
@@ -85,8 +95,8 @@ Duration"
     host = options['host']
     raise ArgumentError('No host provided') unless host
 
-    protocol = options['protocol'] || DEFAULT_CHECK_PROTOCOL
-    endpoint = options['endpoint'] || DEFAULT_CHECK_ENDPOINT
+    protocol = options['protocol'] || @@DEFAULT_CHECK_PROTOCOL
+    endpoint = options['endpoint'] || @@DEFAULT_CHECK_ENDPOINT
     Faraday::Utils::URI("#{protocol}://#{host}#{endpoint}")
   end
 end
