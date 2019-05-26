@@ -10,17 +10,18 @@ require 'semantic_logger'
 
 require_relative '../lib/ruby_uptime'
 
+DEFAULTABLE_OPTIONS = ['frequency', 'protocol', 'endpoint', 'timeout', 'success_criteria']
+
 # TODO: move to networked DB
 options = (YAML.load_file '../checks.yaml')
 
 check_options = options['checks']
-default_options = options['check_defaults']
+user_default_options = options['check_defaults']
 
-# Set defaults
-DEFAULT_CHECK_FREQUENCY = default_options['frequency'] || 10
-DEFAULT_CHECK_PROTOCOL = default_options['protocol'] || 'https'
-DEFAULT_CHECK_ENDPOINT = default_options['endpoint'] || '/testall'
-
+# Merge defaults
+DEFAULTABLE_OPTIONS.each do |defaultable_option|
+  check_options[defaultable_option] = check_options[defaultable_option] || user_default_options[defaultable_option]
+end
 
 logger = init_logger 'simple_uptime_logger'
 
