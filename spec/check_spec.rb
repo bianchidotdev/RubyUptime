@@ -3,8 +3,7 @@ require 'pry'
 
 require_relative '../lib/ruby_uptime/check'
 
-describe 'Check' do
-
+describe Check do
 
     describe '.new' do
         it "instantiates with required information" do
@@ -15,6 +14,7 @@ describe 'Check' do
             check = Check.new(mock_options)
             expect(check).to be_instance_of(Check)
             expect(check.valid?).to be(true)
+            expect(check.uri.to_s).to eq("https://google.com/")
         end
     end
 

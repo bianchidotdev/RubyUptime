@@ -7,20 +7,32 @@ require 'yaml'
 
 require 'faraday'
 require 'semantic_logger'
+require 'pry'
+
+binding.pry
+
 
 require_relative '../lib/ruby_uptime'
+require 'config/check_config'
+require 'config/check_defaults'
+
+include RubyUptime
+
 
 DEFAULTABLE_OPTIONS = ['frequency', 'protocol', 'endpoint', 'timeout', 'success_criteria']
 
 # TODO: move to networked DB
 options = (YAML.load_file '../checks.yaml')
 
-check_options = options['checks']
+# check_options = RubyUptime::CheckConfig::CHECK_OPTIONS
+# binding.pry
 user_default_options = options['check_defaults']
 
 # Merge defaults
 DEFAULTABLE_OPTIONS.each do |defaultable_option|
-  check_options[defaultable_option] = check_options[defaultable_option] || user_default_options[defaultable_option]
+  check_options.each do |check_option|
+    check_option[defaultable_option] = check_option[defaultable_option] || user_default_options[defaultable_option]
+  end
 end
 
 logger = init_logger 'simple_uptime_logger'
