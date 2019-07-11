@@ -1,0 +1,11 @@
+
+testland-dev:
+  name: Testland Lab
+  host: config.lab.testland.auth0.com
+
+testland-dev-1:
+  name: Testland Lab 1
+  host: config.lab-1.testland.auth0.com
+
+testland-dev-2:
+  host: config.lab-2.testland.auth0.com

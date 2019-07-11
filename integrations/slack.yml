@@ -1,0 +1,35 @@
+slack-general:
+  endpoint: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+  method: POST
+  headers:
+    Content-Type: application/json
+  body: >
+    # https://api.slack.com/docs/messages/builder?msg=%7B%22attachments%22%3A%5B%7B%22fallback%22%3A%22Check%20%23%7Bcheck.id%7D%20reporting%20unhealthy.%22%2C%22color%22%3A%22%23E74C3C%22%2C%22pretext%22%3A%22Check%20%23%7Bcheck.id%7D%20reporting%20unhealthy%22%2C%22author_name%22%3A%22Bobby%20Tables%22%2C%22title%22%3A%22Check%20%23%23%7Bcheck.id%7D%22%2C%22title_link%22%3A%22https%3A%2F%2Fapi.slack.com%2F%22%2C%22text%22%3A%22Check%20reporting%20unhealthy%20%23%7B%27on%20%23%7Bcheck.attempts%7D%20attempt%27%20if%20check.attempts%20%3E%201%7D%22%2C%22fields%22%3A%5B%7B%22title%22%3A%22Status%22%2C%22value%22%3A%22%23%7Bcheck.status%7D%22%2C%22short%22%3Afalse%7D%2C%7B%22title%22%3A%22Body%22%2C%22value%22%3A%22%23%7Bcheck.body%7D%22%2C%22short%22%3Afalse%7D%5D%2C%22footer%22%3A%22Slack%20API%22%2C%22footer_icon%22%3A%22https%3A%2F%2Fplatform.slack-edge.com%2Fimg%2Fdefault_application_icon.png%22%2C%22ts%22%3A%22%23%7Bcheck.fail_time%7D%22%7D%5D%7D
+    {
+      "attachments": [
+          {
+              "fallback": "Check #{check.id} reporting unhealthy.",
+              "color": "#E74C3C",
+              "pretext": "Check #{check.id} reporting unhealthy",
+              "author_name": "Bobby Tables",
+              "title": "Check ##{check.id}",
+              "title_link": "https://api.slack.com/",
+              "text": "Check reporting unhealthy #{'on #{check.attempts} attempt' if check.attempts > 1}",
+              "fields": [
+                  {
+                      "title": "Status",
+                      "value": "#{check.status}",
+                      "short": false
+                  },
+          {
+            "title": "Body",
+            "value": "#{check.body}",
+            "short": false
+          }
+              ],
+              "footer": "Slack API",
+              "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
+              "ts": "#{check.fail_time}"
+          }
+      ]
+    }

@@ -9,15 +9,15 @@ require 'faraday'
 require 'semantic_logger'
 require 'pry'
 
-binding.pry
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'config'))
 
-
-require_relative '../lib/ruby_uptime'
-require 'config/check_config'
-require 'config/check_defaults'
+require 'ruby_uptime'
+require 'check_config'
 
 include RubyUptime
 
+include AppConfig
 
 DEFAULTABLE_OPTIONS = ['frequency', 'protocol', 'endpoint', 'timeout', 'success_criteria']
 

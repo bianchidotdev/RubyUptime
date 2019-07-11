@@ -1,0 +1,14 @@
+default: &default
+  protocol: https
+  frequency: 10
+  endpoint: /testall
+  success_criteria:
+    status: 200
+    body: OK
+
+dev:
+  <<: *default
+  frequency: 60
+
+prod:
+  <<: *default
