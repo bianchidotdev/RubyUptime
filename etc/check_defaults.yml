@@ -1,0 +1,7 @@
+# system defined check defaults
+
+protocol: https
+frequency: 30
+endpoint: /
+success_criteria:
+  status: 200

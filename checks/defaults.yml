@@ -1,3 +1,5 @@
+# user defined check defaults
+
 default: &default
   protocol: https
   frequency: 10

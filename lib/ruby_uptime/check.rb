@@ -1,7 +1,7 @@
 require 'semantic_logger'
 require 'faraday'
 
-class Check
+class RubyUptime::Check
 
   include SemanticLogger::Loggable
   attr_accessor :last_time
