@@ -1,8 +1,8 @@
 class RubyUptime::Logger
-  def initialize log_file="#{ENV}.log"
+  def initialize log_file="#{APP_ENV}.log"
     SemanticLogger.default_level = :trace
     SemanticLogger.add_appender(
-      file_name: "#{PROJECT_ROOT}/log/#{log_file}", level: :info, formatter: :json
+      file_name: "#{AppConfig.paths.log_dir}/#{log_file}", level: :info, formatter: :json
     )
     SemanticLogger.add_appender(
       io: $stdout, level: :debug, formatter: :color
@@ -12,25 +12,24 @@ class RubyUptime::Logger
 
     logger
   end
-end    
+end
+
 def logger(logger_name)
-      logger ||=begin
-        SemanticLogger.default_level = :trace
-        SemanticLogger.add_appender(
-          file_name: '../development.log', level: :info, formatter: :json
-        )
-        SemanticLogger.add_appender(
-          io: $stdout, level: :debug, formatter: :color
-        )
+  logger ||=begin
+    SemanticLogger.default_level = :trace
+    SemanticLogger.add_appender(
+      file_name: '../development.log', level: :info, formatter: :json
+    )
+    SemanticLogger.add_appender(
+      io: $stdout, level: :debug, formatter: :color
+    )
 
-        logger = SemanticLogger[logger_name]
+    logger = SemanticLogger[logger_name]
 
-        logger
-      end
-    end
+    logger
   end
 end
 
 def logger
-  logger||=RubyUptime::Logger.new AppConfig.logger.log_file
+  logger||=RubyUptime::Logger.new
 end

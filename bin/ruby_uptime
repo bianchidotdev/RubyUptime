@@ -16,7 +16,7 @@ require 'ruby_uptime'
 
 include RubyUptime
 
-binding.pry
+RubyUptime::CheckManager.new.run
 
 # DEFAULTABLE_OPTIONS = ['frequency', 'protocol', 'endpoint', 'timeout', 'success_criteria']
 

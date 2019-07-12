@@ -7,12 +7,6 @@ class RubyUptime::Check
   attr_accessor :last_time
   attr_reader :next_time, :name, :uri, :reqs
 
-  # set defaults
-  @@DEFAULT_CHECK_FREQUENCY = ENV['DEFAULT_CHECK_FREQUENCY'] || 10
-  @@DEFAULT_CHECK_PROTOCOL = ENV['DEFAULT_CHECK_PROTOCOL'] || 'https'
-  @@DEFAULT_CHECK_ENDPOINT = ENV['DEFAULT_CHECK_ENDPOINT'] || '/'
-  @@DEFAULT_CHECK_TIMEOUT = ENV['DEFAULT_CHECK_TIMEOUT'] || '10'
-
   def self.log_header
     logger.info(
       "Check Time - Check Name - Check Status - Check Body - Next Check Due Time - \
@@ -24,7 +18,7 @@ Duration"
     self.name = options['name']
     @uri = gen_uri options
     @next_time = Time.now.utc.to_f
-    @frequency = options['frequency'] || @@DEFAULT_CHECK_FREQUENCY
+    @frequency = options['frequency'] || nil
     @reqs = {}
   rescue ArgumentError => e
     logger.warn "Error creating check. Ignoring: #{e}"
