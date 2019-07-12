@@ -13,9 +13,10 @@ class RubyUptime::UserConfig
   def files
     dir = AppConfig.paths.check_config_dir
     files = Dir["#{dir}/**/*.yml*"]
+    files << Dir["#{dir}/**/*.json"]
     files.delete(default_config_path)
     logger.debug("Found check config files #{files.join(", ")}")
-    files
+    files.flatten
   end
 
   def default_config_path
