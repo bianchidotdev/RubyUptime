@@ -1,6 +1,4 @@
-# Initial page
-
-## Ruby Uptime
+# Ruby Uptime
 
 RubyUptime is a simple, extensible open-source uptime monitoring tool. It is very much in development right now, but we have 3 main goals/motivations:
 
