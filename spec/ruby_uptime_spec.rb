@@ -1,39 +1,28 @@
 require 'spec_helper'
+require 'ruby_uptime'
 
-require_relative '../lib/ruby_uptime'
-
-include RubyUptime
-
-describe RubyUptime do
-  describe '.init_logger' do
+RSpec.describe RubyUptime do
+  describe 'project root' do
+    include RubyUptime
+    it 'is set and equals the absolute path of the project root' do
+      expect(PROJECT_ROOT).to eq(File.dirname(File.expand_path('..', __FILE__)))
+    end
   end
 
-  describe '.create_checks' do
-    before do
-      check_options = [{"name"=>"testland-dev",
-        "host"=>"config.lab.testland.auth0.com",
-        "frequency"=>1,
-        "protocol"=>"https",
-        "endpoint"=>"/testall",
-        "timeout"=>10,
-        "success_criteria"=>{"status"=>200, "body"=>"OK"}},
-       {"name"=>"testland-dev-1",
-        "host"=>"config.lab-1.testland.auth0.com",
-        "frequency"=>10,
-        "protocol"=>"https",
-        "endpoint"=>"/testall",
-        "timeout"=>10,
-        "success_criteria"=>{"status"=>200, "body"=>"OK"}}]
-        @checks = create_checks(check_options)
-    end
-    it 'creates multiple checks successfully' do
-      expect(@checks.count).to eq(2)
-      expect(@checks.map{|c| c.valid?}).to eq([true, true])
-      expect(@checks.map{|c| c.uri.to_s}).to eq(['https://config.lab.testland.auth0.com/testall', 'https://config.lab-1.testland.auth0.com/testall'])
+  describe 'figgy initializer' do
+    include RubyUptime
+    it 'contains application defaults' do
+      expect(AppConfig.check_defaults).to_not be_empty
+      expect(AppConfig.check_defaults.key?('protocol')).to be(true)
+      expect(AppConfig.check_defaults.key?('endpoint')).to be(true)
+      expect(AppConfig.check_defaults.key?('frequency')).to be(true)
+      expect(AppConfig.check_defaults.key?('success_criteria')).to be(true)
     end
 
-  end
-
-  describe '.eval_check' do
+    it 'contains paths for core functionality' do
+      expect(AppConfig.paths.key?('log_dir')).to be(true)
+      expect(AppConfig.paths.key?('check_config_dir')).to be(true)
+      expect(AppConfig.paths.key?('check_defaults_file')).to be(true)
+    end
   end
 end

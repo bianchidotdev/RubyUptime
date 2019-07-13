@@ -1,11 +1,12 @@
 class RubyUptime::UserConfig
-  attr_reader :check_config
+  attr_reader :check_config, :config_files
 
   def initialize
+    @config_files = files
     user_defaults = load_default_config
     checks = check_config
+    # @check_config = merge_checks_with_defaults(checks, user_defaults)
     # need to merge with default key || default
-    binding.pry
   end
 
   private
@@ -30,7 +31,7 @@ class RubyUptime::UserConfig
   def check_config
     @check_config ||=begin
       checks_array = files.map { |file| load_file(file) }.reject{ |c| !c }
-      checks_keys = checks_array.map { |e| e.keys }.flatten
+      checks_keys = checks_array.flat_map { |e| e.keys }
       dups = checks_keys.group_by{ |e| e }.keep_if{ |_, e| e.length > 1 }
       logger.warn("Duplicate checks exist! There may be strange merging behavior: #{dups.keys.join(', ')}") unless dups.empty?
       checks_array.reduce(:merge)

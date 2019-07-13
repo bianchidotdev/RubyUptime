@@ -12,6 +12,12 @@
 # the additional setup, and require it from the spec files that actually need
 # it.
 #
+
+require 'ruby_uptime'
+include RubyUptime
+
+ENV['ENV'] = 'test'
+
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
@@ -26,6 +32,20 @@ RSpec.configure do |config|
     # ...rather than:
     #     # => "be bigger than 2"
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
+
+    # block logging
+    original_stderr = $stderr
+    original_stdout = $stdout
+    config.before(:all) do
+      # Redirect stderr and stdout
+      $stderr = File.open(File::NULL, "w")
+      $stdout = File.open(File::NULL, "w")
+    end
+    config.after(:all) do
+      $stderr = original_stderr
+      $stdout = original_stdout
+    end
+  
   end
 
   # rspec-mocks config goes here. You can use an alternate test double
