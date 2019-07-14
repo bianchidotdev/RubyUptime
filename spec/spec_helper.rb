@@ -13,10 +13,10 @@
 # it.
 #
 
+ENV['ENV'] = 'test'
+
 require 'ruby_uptime'
 include RubyUptime
-
-ENV['ENV'] = 'test'
 
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 RSpec.configure do |config|
