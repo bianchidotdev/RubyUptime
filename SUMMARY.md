@@ -2,3 +2,7 @@
 
 * [Ruby Uptime](README.md)
 
+## docs
+
+* [test](docs/test.md)
+
