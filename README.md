@@ -6,5 +6,9 @@ RubyUptime is a simple, extensible open-source uptime monitoring tool. It is ver
 2. Allow for simple web-hook based integrations with dynamic content in the cases of failures
 3. Target a simple deployment mechanism regardless of platform needed
 
+### Roadmap
 
+* Implement static-type checking \(\[Sorbet\]\([https://sorbet.org/](https://sorbet.org/)\)\)
+* Dockerize
+* Build out example integrations
 
