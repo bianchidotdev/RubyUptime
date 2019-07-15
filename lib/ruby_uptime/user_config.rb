@@ -1,4 +1,8 @@
+require 'singleton'
+
 class RubyUptime::UserConfig
+  include Singleton
+
   attr_reader :checks, :config_files
 
   def initialize
@@ -13,6 +17,10 @@ class RubyUptime::UserConfig
     @checks ||=begin
       merge_checks_with_defaults
     end
+  end
+
+  def [](key)
+    checks[key]
   end
 
   private

@@ -9,7 +9,7 @@ RSpec.describe RubyUptime::UserConfig do
     let(:check_dir) { AppConfig.paths.check_config_dir }
     let(:check_defaults_file) { AppConfig.paths.check_defaults_file }
     before(:all) do
-      subject = RubyUptime::UserConfig.new
+      subject = RubyUptime::UserConfig.instance
       @config_files = subject.config_files
     end
 
@@ -36,7 +36,7 @@ RSpec.describe RubyUptime::UserConfig do
 
   describe '.check_config' do
     before(:all) do
-      subject = RubyUptime::UserConfig.new
+      subject = RubyUptime::UserConfig.instance
       @checks = subject.checks
     end
 

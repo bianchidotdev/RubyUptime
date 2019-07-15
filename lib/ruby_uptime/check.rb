@@ -1,11 +1,13 @@
 require 'semantic_logger'
 require 'faraday'
 
+class CheckCreationError < StandardError; end
+
 class RubyUptime::Check
 
   include SemanticLogger::Loggable
   attr_accessor :last_time
-  attr_reader :next_time, :name, :uri, :reqs
+  attr_reader :next_time, :name, :uri, :reqs, :error
 
   def self.log_header
     logger.info(
@@ -14,29 +16,32 @@ Duration"
   )
   end
 
-  def initialize(options = {})
-    self.name = options['name']
-    @uri = gen_uri options
-    @next_time = Time.now.utc.to_f
-    @frequency = options['frequency'] || nil
-    @reqs = {}
-  rescue ArgumentError => e
-    logger.warn "Error creating check. Ignoring: #{e}"
-    @valid = false
-    nil
-  end
-
-  def name=(name)
-    raise ArgumentError.new('No name provided') unless name
-
+  def initialize(name)
     @name = name
+    user_config = UserConfig.instance
+    raise CheckCreationError("could not find config for check #{name}") unless user_config[name]
+    @user_defined_config = user_config[name]
+    @uri = gen_uri
+    @next_time = Time.now.utc.to_f
+    @frequency = nil
+    @reqs = {}
+  rescue StandardError => e
+    logger.warn("Error creating check - #{e}")
+    @error = e
+    @valid = false
   end
 
-  def host=(host)
-    raise ArgumentError.new('No host provided') unless host
+  # def name=(name)
+  #   raise ArgumentError.new('No name provided') unless name
 
-    @host = host
-  end
+  #   @name = name
+  # end
+
+  # def host=(host)
+  #   raise ArgumentError.new('No host provided') unless host
+
+  #   @host = host
+  # end
 
   def valid?
     @valid != false
@@ -85,12 +90,12 @@ Duration"
 
   private
 
-  def gen_uri(options)
-    host = options['host']
+  def gen_uri
+    host = @user_defined_config['host']
     raise ArgumentError('No host provided') unless host
 
-    protocol = options['protocol'] || @@DEFAULT_CHECK_PROTOCOL
-    endpoint = options['endpoint'] || @@DEFAULT_CHECK_ENDPOINT
+    protocol = @user_defined_config['protocol'] || AppConfig.check_defaults.protocol
+    endpoint = @user_defined_config['endpoint'] || AppConfig.check_defaults.endpoint
     Faraday::Utils::URI("#{protocol}://#{host}#{endpoint}")
   end
 end
