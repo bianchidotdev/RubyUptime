@@ -2,7 +2,7 @@
 
 default: &default
   protocol: https
-  frequency: 10
+  frequency: 30
   endpoint: /testall
   success_criteria:
     status: 200
@@ -14,3 +14,4 @@ dev:
 
 prod:
   <<: *default
+  frequency: 10

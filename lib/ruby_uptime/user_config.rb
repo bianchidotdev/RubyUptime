@@ -1,30 +1,38 @@
 class RubyUptime::UserConfig
-  attr_reader :check_config, :config_files
+  attr_reader :checks, :config_files
 
   def initialize
     @config_files = files
-    user_defaults = load_default_config
-    checks = check_config
-    # @check_config = merge_checks_with_defaults(checks, user_defaults)
+    # checks
+    # @user_defaults = load_default_config
+    # @user_check_config = check_config
     # need to merge with default key || default
+  end
+
+  def checks
+    @checks ||=begin
+      merge_checks_with_defaults
+    end
   end
 
   private
 
   def files
-    dir = AppConfig.paths.check_config_dir
-    files = Dir["#{dir}/**/*.yml*"]
-    files << Dir["#{dir}/**/*.json"]
-    files.delete(default_config_path)
-    logger.debug("Found check config files #{files.join(", ")}")
-    files.flatten
+    @files ||=begin
+      dir = AppConfig.paths.check_config_dir
+      files = Dir["#{dir}/**/*.yml*"]
+      files << Dir["#{dir}/**/*.json"]
+      files.delete(default_config_path)
+      logger.debug("Found check config files #{files.join(", ")}")
+      files.flatten
+    end
   end
 
   def default_config_path
     "#{AppConfig.paths.check_config_dir}/#{AppConfig.paths.check_defaults_file}"
   end
 
-  def load_default_config
+  def user_defaults
     load_file(default_config_path) if File.file?(default_config_path)
   end
 
@@ -36,6 +44,19 @@ class RubyUptime::UserConfig
       logger.warn("Duplicate checks exist! There may be strange merging behavior: #{dups.keys.join(', ')}") unless dups.empty?
       checks_array.reduce(:merge)
     end
+  end
+
+  def merge_checks_with_defaults
+    check_config.map do |key, config|
+      default = config.dig('default') || 'default'
+      logger.warn("Could not find user-defined default: #{default} - using 'default'") unless user_defaults[default] 
+      default_config = user_defaults[default]
+      # prior hash gets overriden by successive hash
+      merged_config = default_config.merge(config) if default_config
+      # returns a hash of merged config
+      # https://stackoverflow.com/a/25666112/8418673
+      [key, merged_config]
+    end.to_h
   end
 
   def load_file(filename)
