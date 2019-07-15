@@ -10,7 +10,6 @@ require 'semantic_logger'
 require 'pry'
 
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-# $:.unshift(File.join(File.dirname(__FILE__), '..', 'config'))
 
 require 'ruby_uptime'
 

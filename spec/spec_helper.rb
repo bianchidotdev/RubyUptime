@@ -15,6 +15,10 @@
 
 ENV['ENV'] = 'test'
 
+$:.unshift(File.join(File.dirname(__FILE__)))
+
+require 'support/factory_bot'
+
 require 'ruby_uptime'
 include RubyUptime
 
@@ -45,7 +49,7 @@ RSpec.configure do |config|
     #   $stderr = original_stderr
     #   $stdout = original_stdout
     # end
-  
+
   end
 
   # rspec-mocks config goes here. You can use an alternate test double
