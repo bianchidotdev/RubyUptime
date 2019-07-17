@@ -27,7 +27,13 @@ RSpec.describe RubyUptime::Check do
 
   context 'check with headers' do
     subject { Check.new('testland-dev') }
-    it 'us created with both application default and user defined config' do
+    it 'is created with both application default and user defined config' do
+      expect(subject).to_not be_nil
+      expect(subject.error).to be_nil
+      expect(subject.valid?).to be(true)
+      expect(subject.uri.to_s).to eq('https://config.lab.testland.auth0.com/testall')
+      expect(subject.frequency).to eq(60)
+
       headers = {
         'Host' => 'a0-1.config.lab.testland.auth0.com',
         'User-Agent' => 'RubyUptime/1.0.0'
