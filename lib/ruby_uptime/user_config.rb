@@ -3,7 +3,7 @@ require 'singleton'
 class RubyUptime::UserConfig
   include Singleton
 
-  attr_reader :checks, :config_files
+  attr_reader :config_files
 
   def initialize
     @config_files = files
