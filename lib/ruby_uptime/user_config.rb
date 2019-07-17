@@ -7,10 +7,6 @@ class RubyUptime::UserConfig
 
   def initialize
     @config_files = files
-    # checks
-    # @user_defaults = load_default_config
-    # @user_check_config = check_config
-    # need to merge with default key || default
   end
 
   def checks

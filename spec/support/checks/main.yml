@@ -10,6 +10,8 @@ testland-missing-name:
 testland-dev:
   name: Testland Lab 1
   host: config.lab.testland.auth0.com
+  headers:
+    Host: 'a0-1.config.lab.testland.auth0.com'
   success_criteria:
     status: 200
   default: dev

@@ -59,7 +59,8 @@ RSpec.describe RubyUptime::UserConfig do
         'status' => 200
       })
       expect(check['endpoint']).to eq('/testall')
-      expect(check['frequency']).to eq(30)
+      # no user-defined frequency - will pick up system default
+      expect(check['frequency']).to be_nil
     end
 
     it 'allowed for specified defaults' do
@@ -72,6 +73,7 @@ RSpec.describe RubyUptime::UserConfig do
       })
       expect(dev_check['endpoint']).to eq('/testall')
       expect(dev_check['frequency']).to eq(60)
+      expect(dev_check['headers']).to eq({'Host' => 'a0-1.config.lab.testland.auth0.com'})
 
       expect(prod_check['protocol']).to eq('https')
       expect(prod_check['success_criteria']).to eq({

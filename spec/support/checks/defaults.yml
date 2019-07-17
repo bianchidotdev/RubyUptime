@@ -2,7 +2,6 @@
 
 default: &default
   protocol: https
-  frequency: 30
   endpoint: /testall
   success_criteria:
     status: 200

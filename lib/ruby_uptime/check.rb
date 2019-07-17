@@ -1,5 +1,5 @@
 require 'semantic_logger'
-require 'faraday'
+require 'http'
 
 class CheckCreationError < StandardError; end
 
@@ -7,7 +7,7 @@ class RubyUptime::Check
 
   include SemanticLogger::Loggable
   attr_accessor :last_time
-  attr_reader :next_time, :name, :uri, :reqs, :error
+  attr_reader :next_time, :name, :uri, :requests, :error, :frequency, :headers
 
   def self.log_header
     logger.info(
@@ -21,35 +21,23 @@ Duration"
     user_config = UserConfig.instance
     raise CheckCreationError("could not find config for check #{name}") unless user_config[name]
     @user_defined_config = user_config[name]
-    @uri = gen_uri
-    @next_time = Time.now.utc.to_f
-    @frequency = nil
-    @reqs = {}
+    configure_check
   rescue StandardError => e
     logger.warn("Error creating check - #{e}")
-    @error = e
+    @error = "Error creating check - #{e}"
     @valid = false
   end
-
-  # def name=(name)
-  #   raise ArgumentError.new('No name provided') unless name
-
-  #   @name = name
-  # end
-
-  # def host=(host)
-  #   raise ArgumentError.new('No host provided') unless host
-
-  #   @host = host
-  # end
 
   def valid?
     @valid != false
   end
 
-  def eval(conn)
+  def eval
+    http = HTTP
+      .headers(@headers)
+      .follow(max_hops: 5)
     start_time = Time.now.utc.to_f
-    resp = conn.get @uri
+    resp = http.get @uri
     end_time = Time.now.utc.to_f
     duration = end_time - start_time
     [resp, duration]
@@ -60,11 +48,11 @@ Duration"
   end
 
   def add_request(time, request)
-    @reqs[time] = request
+    @requests[time] = request
   end
 
   def remove_request(time)
-    @reqs.delete(time)
+    @requests.delete(time)
   end
 
   def successful?
@@ -75,10 +63,10 @@ Duration"
     name = self.name
     last_time = Time.at(self.last_time).utc
     next_time = Time.at(self.next_time).utc
-    response = self.reqs[time][:resp]
+    response = self.requests[time][:resp]
     status = response.status
     body = response.body
-    duration = self.reqs[time][:duration]
+    duration = self.requests[time][:duration]
     logger.info(
       "#{last_time} - #{name} - #{status} - #{body} - #{next_time} - \
 #{duration.round(3)}s"
@@ -90,13 +78,22 @@ Duration"
 
   private
 
+  def configure_check
+    @uri = gen_uri
+    user_headers = @user_defined_config['headers'] || {}
+    @headers = AppConfig.check_defaults.headers.merge(user_headers)
+    @next_time = Time.now.utc.to_f
+    @frequency = @user_defined_config['frequency'] || AppConfig.check_defaults.frequency
+    @requests = {}
+  end
+
   def gen_uri
     host = @user_defined_config['host']
     raise ArgumentError('No host provided') unless host
 
     protocol = @user_defined_config['protocol'] || AppConfig.check_defaults.protocol
     endpoint = @user_defined_config['endpoint'] || AppConfig.check_defaults.endpoint
-    Faraday::Utils::URI("#{protocol}://#{host}#{endpoint}")
+    URI("#{protocol}://#{host}#{endpoint}")
   end
 end
   
