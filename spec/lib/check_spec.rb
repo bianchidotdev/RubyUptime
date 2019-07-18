@@ -43,8 +43,47 @@ RSpec.describe RubyUptime::Check do
   end
 
   describe '#ready?' do
+    subject { Check.new('testland-dev') }
     it 'correctly returns true if current time is sooner than last time' do
-      
+      expect(subject.ready?).to be(true)
     end
+
+    context 'stubbed time' do
+      before do
+        allow(Time).to receive(:now).and_return(Time.now - 10)
+      end
+      it 'returns false if time is prior to next_time' do
+        expect(subject.ready?).to be(false)
+      end
+    end
+  end
+
+  describe '#start_request' do
+    subject { Check.new('testland-dev') }
+    let(:eval_id) { SecureRandom.hex(9) }
+
+    before do
+      @stub = stub_request(:get, subject.uri).
+         to_return(status: 200, body: 'OK', headers: {})
+    end
+
+    it 'makes the request and set the @requests var successfully' do
+      subject.start_request(eval_id)
+      expect(@stub).to have_been_requested
+      expect(subject.requests[eval_id][:resp].status).to eq(200)
+      expect(subject.requests[eval_id][:resp].body.to_s).to match(/OK/)
+    end
+  end
+
+  describe '#successful?' do
+    # TODO: need to add tests for all possible success criteria here
+  end
+
+  describe '#on_success' do
+    # TODO: Make sure it resets failure counter
+  end
+
+  describe '#on_failure' do
+    # TODO: Make sure it respects and decrements failure counter
   end
 end

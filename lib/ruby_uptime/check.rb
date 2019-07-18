@@ -36,7 +36,7 @@ Duration"
     @next_time < Time.now.utc
   end
 
-  def eval!
+  def eval
     return unless ready?
     eval_id = gen_eval_id
     @last_time = Time.now.utc
@@ -60,9 +60,11 @@ Duration"
     duration = end_time - start_time
     @requests[eval_id][:resp] = resp
     @requests[eval_id][:duration] = duration
+    true
   rescue StandardError => e
     @requests[eval_id][:errors] = e
     on_failure(eval_id)
+    false
   end
 
   def remove_request(eval_id)
@@ -91,7 +93,6 @@ Duration"
     logger.warn(
       "Check #{@id} failed - #{@requests[eval_id]}"
     )
-
   end
 
   private

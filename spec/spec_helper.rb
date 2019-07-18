@@ -18,6 +18,7 @@ ENV['ENV'] = 'test'
 $:.unshift(File.join(File.dirname(__FILE__)))
 
 require 'support/factory_bot'
+require 'webmock/rspec'
 
 require 'ruby_uptime'
 include RubyUptime

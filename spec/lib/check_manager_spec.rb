@@ -19,8 +19,13 @@ RSpec.describe RubyUptime::CheckManager do
 		context 'single check' do
 			subject { CheckManager.new }
 			let(:check) { subject.checks.first }
+
+			before do
+				stub_request(:get, check.uri)
+			end
 			
 			it 'does something?' do
+				
 				expect(subject.eval_check(check)).to be(true)
 			end
 		end

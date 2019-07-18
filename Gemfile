@@ -10,4 +10,5 @@ group :development, :test do
   gem 'pry'
   gem 'pry-nav'
   gem 'factory_bot'
+  gem 'webmock'
 end

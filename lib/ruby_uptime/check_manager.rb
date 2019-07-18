@@ -45,7 +45,7 @@ class RubyUptime::CheckManager
   end
 
   def eval_check(check)
-    check.eval!
+    check.eval
   rescue StandardError => e
     logger.warn("Error checking host #{check.uri} - #{e.class}: #{e.message}")
   end
