@@ -60,19 +60,28 @@ RSpec.describe RubyUptime::Check do
 
   describe '#start_request' do
     subject { Check.new('testland-dev') }
-    let(:eval_id) { SecureRandom.hex(9) }
-
-    before do
-      @stub = stub_request(:get, subject.uri).
-         to_return(status: 200, body: 'OK', headers: {})
-    end
+    # let(:eval_id) { SecureRandom.hex(9) }
 
     it 'makes the request and set the @requests var successfully' do
+      eval_id = SecureRandom.hex(9)
+      stub = stub_request(:get, subject.uri).
+         to_return(status: 200, body: 'OK', headers: {})
+
       subject.start_request(eval_id)
-      expect(@stub).to have_been_requested
+      expect(stub).to have_been_requested
       expect(subject.requests[eval_id][:resp].status).to eq(200)
       expect(subject.requests[eval_id][:resp].body.to_s).to match(/OK/)
     end
+
+    # it 'handles timeout gracefully' do
+    #   eval_id = SecureRandom.hex(9)
+    #   stub = stub_request(:get, subject.uri).
+    #     to_raise()
+
+    #   subject.start_request(eval_id)
+    #   expect(stub).to have_been_requested
+    #   expect(subject.requests[eval_id][:resp]).to be(true)
+    # end
   end
 
   describe '#successful?' do
