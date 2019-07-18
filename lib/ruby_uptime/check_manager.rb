@@ -1,4 +1,6 @@
 class RubyUptime::CheckManager
+  # include SemanticLogger::Loggable
+
   attr_reader :checks
   def run!
     Check.log_header

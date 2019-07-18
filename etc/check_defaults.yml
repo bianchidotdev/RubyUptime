@@ -3,6 +3,7 @@
 protocol: https
 frequency: 30
 endpoint: /
+timeout: 60
 headers:
   User-Agent: 'RubyUptime/1.0.0'
 success_criteria:

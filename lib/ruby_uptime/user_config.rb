@@ -2,6 +2,7 @@ require 'singleton'
 
 class RubyUptime::UserConfig
   include Singleton
+  # include SemanticLogger::Loggable
 
   attr_reader :config_files
 
