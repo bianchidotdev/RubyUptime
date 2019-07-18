@@ -7,7 +7,7 @@ class RubyUptime::Check
 
   include SemanticLogger::Loggable
   attr_accessor :last_time
-  attr_reader :next_time, :name, :uri, :requests, :error, :frequency, :headers
+  attr_reader :next_time, :id, :name, :uri, :requests, :error, :frequency, :headers
 
   def self.log_header
     logger.info(
@@ -16,11 +16,11 @@ Duration"
   )
   end
 
-  def initialize(name)
-    @name = name
+  def initialize(id)
+    @id = id
     user_config = UserConfig.instance
-    raise CheckCreationError("could not find config for check #{name}") unless user_config[name]
-    @user_defined_config = user_config[name]
+    raise CheckCreationError("could not find config for check #{id}") unless user_config[id]
+    @user_defined_config = user_config[id]
     configure_check
   rescue StandardError => e
     logger.warn("Error creating check - #{e}")
@@ -69,8 +69,9 @@ Duration"
     @requests.delete(eval_id)
   end
 
-  def successful?(_eval_id)
-    return true
+  def successful?(eval_id)
+    # TODO: Implement success criteria checking
+    @requests[eval_id][:resp].status.success?
   end
 
   def on_success(eval_id)
@@ -80,7 +81,7 @@ Duration"
     body = response.body
     duration = @requests[eval_id][:duration]
     logger.info(
-      "#{@last_time} - #{@name} - #{status} - #{body} - #{@next_time} - \
+      "#{@last_time} - #{@id} - #{status} - #{body} - #{@next_time} - \
 #{duration.round(3)}s"
     )
   end
@@ -88,7 +89,7 @@ Duration"
   def on_failure(eval_id)
     # TODO: Implement counter decrement
     logger.warn(
-      "Check #{@name} failed - #{@requests[eval_id]}"
+      "Check #{@id} failed - #{@requests[eval_id]}"
     )
 
   end

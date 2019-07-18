@@ -35,7 +35,7 @@ class RubyUptime::CheckManager
     @checks ||=begin
       @user_config.checks.keys.map do |check_config|
         check = Check.new(check_config)
-        check if check.valid?
+        check.valid? ? check : nil
       end.compact
     end
   end
