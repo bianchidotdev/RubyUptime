@@ -41,4 +41,10 @@ RSpec.describe RubyUptime::Check do
       expect(subject.headers).to eq(headers)
     end
   end
+
+  describe '#ready?' do
+    it 'correctly returns true if current time is sooner than last time' do
+      
+    end
+  end
 end

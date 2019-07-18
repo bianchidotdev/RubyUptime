@@ -5,7 +5,6 @@
 require 'date'
 require 'yaml'
 
-require 'faraday'
 require 'semantic_logger'
 require 'pry'
 
@@ -15,4 +14,4 @@ require 'ruby_uptime'
 
 include RubyUptime
 
-RubyUptime::CheckManager.new.run
+RubyUptime::CheckManager.new.run!

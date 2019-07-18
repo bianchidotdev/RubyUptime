@@ -32,58 +32,82 @@ Duration"
     @valid != false
   end
 
-  def eval
-    http = HTTP
-      .headers(@headers)
-      .follow(max_hops: 5)
+  def ready?
+    @next_time < Time.now.utc
+  end
+
+  def eval!
+    return unless ready?
+    eval_id = gen_eval_id
+    @last_time = Time.now.utc
+    @next_time = @last_time + @frequency
+
+    start_request(eval_id)
+
+    successful?(eval_id) ? on_success(eval_id) : on_failure(eval_id)
+
+    remove_request(eval_id)
+    true
+  end
+
+  def start_request(eval_id)
     start_time = Time.now.utc.to_f
-    resp = http.get @uri
-    end_time = Time.now.utc.to_f
+    @requests[eval_id] = {
+      start_time: start_time,
+    }
+    resp = @http.get(@uri)
+    end_time  = Time.now.utc.to_f
     duration = end_time - start_time
-    [resp, duration]
+    @requests[eval_id][:resp] = resp
+    @requests[eval_id][:duration] = duration
+  rescue StandardError => e
+    @requests[eval_id][:errors] = e
+    on_failure(eval_id)
   end
 
-  def set_next_time
-    @next_time = @next_time + @frequency
+  def remove_request(eval_id)
+    @requests.delete(eval_id)
   end
 
-  def add_request(time, request)
-    @requests[time] = request
-  end
-
-  def remove_request(time)
-    @requests.delete(time)
-  end
-
-  def successful?
+  def successful?(_eval_id)
     return true
   end
 
-  def on_success(time)
-    name = self.name
-    last_time = Time.at(self.last_time).utc
-    next_time = Time.at(self.next_time).utc
-    response = self.requests[time][:resp]
+  def on_success(eval_id)
+    # TODO: Implement counter reset
+    response = @requests[eval_id][:resp]
     status = response.status
     body = response.body
-    duration = self.requests[time][:duration]
+    duration = @requests[eval_id][:duration]
     logger.info(
-      "#{last_time} - #{name} - #{status} - #{body} - #{next_time} - \
+      "#{@last_time} - #{@name} - #{status} - #{body} - #{@next_time} - \
 #{duration.round(3)}s"
     )
   end
 
-  def on_failure(time)
+  def on_failure(eval_id)
+    # TODO: Implement counter decrement
+    logger.warn(
+      "Check #{@name} failed - #{@requests[eval_id]}"
+    )
+
   end
 
   private
+
+  def gen_eval_id
+    sprintf("%20.10f", Time.now.to_f).delete('.').to_i.to_s(36)
+  end
 
   def configure_check
     @uri = gen_uri
     user_headers = @user_defined_config['headers'] || {}
     @headers = AppConfig.check_defaults.headers.merge(user_headers)
-    @next_time = Time.now.utc.to_f
+    @next_time = Time.now.utc
     @frequency = @user_defined_config['frequency'] || AppConfig.check_defaults.frequency
+    @http = HTTP
+      .headers(@headers)
+      .follow(max_hops: 5)
     @requests = {}
   end
 

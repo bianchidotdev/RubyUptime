@@ -15,14 +15,14 @@ RSpec.describe RubyUptime::CheckManager do
 		end
 	end
 
-	# describe '#eval_check' do
-	# 	context 'single check' do
-	# 		subject { CheckManager.new }
-	# 		let(:check) { subject.checks.first }
+	describe '#eval_check' do
+		context 'single check' do
+			subject { CheckManager.new }
+			let(:check) { subject.checks.first }
 			
-	# 		it 'does something?' do
-	# 			expect(subject.eval_check(check)).to be(false)
-	# 		end
-	# 	end
-	# end
+			it 'does something?' do
+				expect(subject.eval_check(check)).to be(true)
+			end
+		end
+	end
 end

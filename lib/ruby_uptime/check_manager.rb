@@ -5,10 +5,8 @@ class RubyUptime::CheckManager
 
     threads = {}
     loop do
-      @checks.each do |check|
-        if check.next_time < Time.now.utc.to_f
-          threads[Time.now.utc.to_f] = Thread.new { eval_check check, logger }
-        end
+      @checks.select(&:ready?).each do |check|
+        threads[Time.now.utc.to_f] = Thread.new { eval_check(check) }
         sleep 0.001
       end
 
@@ -47,25 +45,8 @@ class RubyUptime::CheckManager
   end
 
   def eval_check(check)
-    time = Time.now.utc.to_f
-
-    if check.next_time < time
-      check.last_time = time
-      check.set_next_time
-      begin
-        resp, duration = check.eval
-      rescue StandardError => e
-        logger.warn("Error checking host #{check.uri} - #{e.class}: #{e.message}")
-      end
-      request = {
-        :resp => resp,
-        :duration => duration,
-      }
-      check.add_request(time, request)
-
-      check.successful? ? check.on_success(time) : check.on_failure(time)
-      check.remove_request(time)
-      check
-    end
+    check.eval!
+  rescue StandardError => e
+    logger.warn("Error checking host #{check.uri} - #{e.class}: #{e.message}")
   end
 end
