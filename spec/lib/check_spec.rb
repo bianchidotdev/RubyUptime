@@ -88,10 +88,52 @@ RSpec.describe RubyUptime::Check do
   end
 
   describe '#successful?' do
-    subject { Check.new('testland') }
     
     # TODO: need to add tests for all possible success criteria here
-    it 'has success_criteria' do
+    context 'after successful request' do
+      subject { Check.new('testland') }
+
+      before do
+        allow(subject).to receive(:remove_request).and_return(true)
+        stub = stub_request(:get, subject.uri).
+          to_return(status: 200, body: 'OK', headers: {})
+
+        subject.eval
+        expect(stub).to have_been_requested
+      end
+
+      it 'has success_criteria' do
+        expect(subject.success_criteria).to eq([{"body"=>"OK", "status"=>200}])
+      end
+
+      it 'passes if ALL success criteria pass' do
+        expect(subject.requests.count).to eq(1)
+
+        eval_id = subject.requests.keys.first
+
+        expect(subject.successful?(eval_id)).to eq(true)
+      end
+    end
+
+    context 'after successful status code but incorrect body' do
+      subject { Check.new('testland') }
+
+      before do
+        allow(subject).to receive(:remove_request).and_return(true)
+        stub = stub_request(:get, subject.uri).
+          to_return(status: 200, body: 'ERROR!', headers: {})
+
+        subject.eval
+        expect(stub).to have_been_requested
+      end
+
+      it 'fails when an incorrect body is passed in' do
+        expect(subject.requests.count).to eq(1)
+
+        eval_id = subject.requests.keys.first
+
+        expect(subject.successful?(eval_id)).to eq(false)
+      end
     end
   end
 

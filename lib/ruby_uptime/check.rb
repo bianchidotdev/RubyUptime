@@ -19,7 +19,7 @@ module RubyUptime
     def initialize(id)
       @id = id
       user_config = UserConfig.instance
-      raise CheckCreationError("could not find config for check #{id}") unless user_config[id]
+      raise CheckCreationError.new("could not find config for check #{id}") unless user_config[id]
       @user_defined_config = user_config[id]
       configure_check
     rescue StandardError => e
@@ -73,6 +73,9 @@ module RubyUptime
 
     def successful?(eval_id)
       # TODO: Implement success criteria checking
+      status = @requests[eval_id][:resp].status
+      body = @requests[eval_id][:resp].to_s
+
       @requests[eval_id][:resp].status.success?
     end
 
@@ -109,6 +112,7 @@ module RubyUptime
       @frequency = @user_defined_config['frequency'] || AppConfig.check_defaults.frequency
       @timeout = @user_defined_config['timeout'] || AppConfig.check_defaults.timeout
       @success_criteria = @user_defined_config['success_criteria'] || AppConfig.check_defaults.success_criteria
+      # TODO: Looks like we'll need a different HTTP client for SSL certs - big pain in the butt
       @http = HTTP
         .headers(@headers)
         .follow(max_hops: 5)

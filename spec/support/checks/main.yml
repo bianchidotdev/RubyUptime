@@ -20,3 +20,8 @@ testland-prod:
   name: Testland Lab PROD
   host: config.lab.testland.auth0.com
   default: prod
+
+string-success-criteria:
+  name: Test check with junk success criteria
+  host: config.lab.testland.auth0.com
+  success_criteria: "test"

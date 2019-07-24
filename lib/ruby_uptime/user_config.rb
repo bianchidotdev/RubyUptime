@@ -66,7 +66,6 @@ class RubyUptime::UserConfig
   end
 
   def coerce_success_criteria(checks)
-    # TODO: Write tests
     checks.map do |key, config|
       success_criteria = config['success_criteria']
       return [key, config] if success_criteria.nil?

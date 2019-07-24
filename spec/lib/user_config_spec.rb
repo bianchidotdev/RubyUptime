@@ -83,6 +83,15 @@ RSpec.describe RubyUptime::UserConfig do
       expect(prod_check['endpoint']).to eq('/testall')
       expect(prod_check['frequency']).to eq(10)
     end
-  end
 
+    it 'coerce success criteria to handle differings of formats' do
+      hash_check = @checks['testland-dev']
+      array_check = @checks['testland']
+      string_check = @checks['string-success-criteria']
+
+      expect(hash_check['success_criteria']).to eq([{"status"=>200}])
+      expect(array_check['success_criteria']).to eq([{"body"=>"OK", "status"=>200}])
+      expect(string_check['success_criteria']).to eq(nil)
+    end
+  end
 end
