@@ -6,9 +6,8 @@ class CheckCreationError < StandardError; end
 module RubyUptime
   class Check
 
-    include SemanticLogger::Loggable
     attr_accessor :last_time
-    attr_reader :next_time, :id, :name, :uri, :requests, :error, :frequency, :headers
+    attr_reader :next_time, :id, :name, :uri, :requests, :error, :frequency, :headers, :success_criteria
 
     def self.log_header
       logger.info(
@@ -109,6 +108,7 @@ module RubyUptime
       @next_time = Time.now.utc
       @frequency = @user_defined_config['frequency'] || AppConfig.check_defaults.frequency
       @timeout = @user_defined_config['timeout'] || AppConfig.check_defaults.timeout
+      @success_criteria = @user_defined_config['success_criteria'] || AppConfig.check_defaults.success_criteria
       @http = HTTP
         .headers(@headers)
         .follow(max_hops: 5)

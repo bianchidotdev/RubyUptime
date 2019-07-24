@@ -4,8 +4,8 @@ default: &default
   protocol: https
   endpoint: /testall
   success_criteria:
-    status: 200
-    body: OK
+    - status: 200
+      body: OK
 
 dev:
   <<: *default

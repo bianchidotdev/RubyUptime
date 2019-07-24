@@ -12,7 +12,8 @@ class RubyUptime::UserConfig
 
   def checks
     @checks ||=begin
-      merge_checks_with_defaults
+      checks = merge_checks_with_defaults
+      coerce_success_criteria(checks)
     end
   end
 
@@ -61,6 +62,20 @@ class RubyUptime::UserConfig
       # returns a hash of merged config
       # https://stackoverflow.com/a/25666112/8418673
       [key, merged_config]
+    end.to_h
+  end
+
+  def coerce_success_criteria(checks)
+    # TODO: Write tests
+    checks.map do |key, config|
+      success_criteria = config['success_criteria']
+      return [key, config] if success_criteria.nil?
+      unless [Hash, Array].include?(success_criteria.class) 
+        logger.error("Invalid success criteria for check #{key}")
+        config['success_criteria'] = nil
+      end
+      config['success_criteria'] = [success_criteria] if success_criteria.is_a?(Hash)
+      [key, config]
     end.to_h
   end
 

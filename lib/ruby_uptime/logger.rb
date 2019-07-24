@@ -1,5 +1,5 @@
 module RubyUptime
-  module Logger
+  class Logger
     def self.init_logger(logger_name, log_file="#{APP_ENV}.log")
       SemanticLogger.default_level = :trace
       SemanticLogger.add_appender(
@@ -12,6 +12,10 @@ module RubyUptime
   
       logger
     end
+
+    def self.logger
+      @logger ||= self.init_logger("RubyUptime")
+    end
   end
 end
 
@@ -21,5 +25,5 @@ end
 # caller_locations.first.lineno                 # line number of caller
 
 def logger
-  @logger||=RubyUptime::Logger.init_logger("RubyUptime")
+  @logger ||= RubyUptime::Logger.logger
 end

@@ -1,5 +1,5 @@
 
-RSpec.describe RubyUptime::UserConfig do
+RSpec.describe RubyUptime::UserConfig do  
   describe '#new' do
     it 'loads defaults, checks, and merges them all' do
     end
@@ -34,8 +34,8 @@ RSpec.describe RubyUptime::UserConfig do
     end
   end
 
-  describe '.check_config' do
-    before(:all) do
+  describe '#check_config' do
+    before do
       subject = RubyUptime::UserConfig.instance
       @checks = subject.checks
     end
@@ -54,10 +54,10 @@ RSpec.describe RubyUptime::UserConfig do
       expect(check['name']).to eq('Testland Lab')
       expect(check['host']).to eq('config.lab.testland.auth0.com')
       expect(check['protocol']).to eq('https')
-      expect(check['success_criteria']).to eq({
+      expect(check['success_criteria']).to eq([{
         'body' => "OK",
         'status' => 200
-      })
+      }])
       expect(check['endpoint']).to eq('/testall')
       # no user-defined frequency - will pick up system default
       expect(check['frequency']).to be_nil
@@ -68,18 +68,18 @@ RSpec.describe RubyUptime::UserConfig do
       prod_check = @checks['testland-prod']
 
       expect(dev_check['protocol']).to eq('https')
-      expect(dev_check['success_criteria']).to eq({
+      expect(dev_check['success_criteria']).to eq([{
         'status' => 200
-      })
+      }])
       expect(dev_check['endpoint']).to eq('/testall')
       expect(dev_check['frequency']).to eq(60)
       expect(dev_check['headers']).to eq({'Host' => 'a0-1.config.lab.testland.auth0.com'})
 
       expect(prod_check['protocol']).to eq('https')
-      expect(prod_check['success_criteria']).to eq({
+      expect(prod_check['success_criteria']).to eq([{
         'body' => "OK",
         'status' => 200
-      })
+      }])
       expect(prod_check['endpoint']).to eq('/testall')
       expect(prod_check['frequency']).to eq(10)
     end

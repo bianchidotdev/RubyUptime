@@ -13,7 +13,7 @@ testland-dev:
   headers:
     Host: 'a0-1.config.lab.testland.auth0.com'
   success_criteria:
-    status: 200
+    status: 200 # deliberately not an array for test on coerce_success_criteria
   default: dev
 
 testland-prod:
