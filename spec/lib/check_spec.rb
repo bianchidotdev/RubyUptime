@@ -72,7 +72,7 @@ RSpec.describe RubyUptime::Check do
 
       subject.start_request(eval_id)
       expect(stub).to have_been_requested
-      expect(subject.requests[eval_id][:resp].status).to eq(200)
+      expect(subject.requests[eval_id][:resp].code).to eq("200")
       expect(subject.requests[eval_id][:resp].body.to_s).to match(/OK/)
     end
 
@@ -91,11 +91,11 @@ RSpec.describe RubyUptime::Check do
     
     # TODO: need to add tests for all possible success criteria here
     context 'after successful request' do
-      subject { Check.new('testland') }
+      subject { Check.new('http-test') }
 
       before do
         allow(subject).to receive(:remove_request).and_return(true)
-        stub = stub_request(:get, subject.uri).
+        stub = stub_request(:get, subject.uri.to_s).
           to_return(status: 200, body: 'OK', headers: {})
 
         subject.eval
@@ -116,7 +116,7 @@ RSpec.describe RubyUptime::Check do
     end
 
     context 'after successful status code but incorrect body' do
-      subject { Check.new('testland') }
+      subject { Check.new('http-test') }
 
       before do
         allow(subject).to receive(:remove_request).and_return(true)

@@ -3,6 +3,11 @@ testland:
   name: Testland Lab
   host: config.lab.testland.auth0.com
 
+http-test:
+  name: Testland Lab
+  host: config.lab.testland.auth0.com
+
+
 testland-missing-name:
   host: config.lab-2.testland.auth0.com
 

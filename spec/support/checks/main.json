@@ -1,6 +1,7 @@
 {
 	"json-test": {
 		"name": "Google",
-		"host": "www.google.com"
+		"host": "www.google.com",
+		"protocol": "http"
 	}
 }

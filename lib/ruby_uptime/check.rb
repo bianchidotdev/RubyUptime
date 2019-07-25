@@ -55,10 +55,19 @@ module RubyUptime
       @requests[eval_id] = {
         start_time: start_time,
       }
-      resp = @http.get(@uri)
+
+      cert = nil
+      resp = @http.start do |conn|
+        resp = conn.get(@uri.request_uri)
+        cert = conn.peer_cert if @uri.port == 443
+        resp
+      end
+      logger.error(resp.inspect)
+
       end_time  = Time.now.utc.to_f
       duration = end_time - start_time
       @requests[eval_id][:resp] = resp
+      @requests[eval_id][:cert] = cert
       @requests[eval_id][:duration] = duration
       true
     rescue StandardError => e
@@ -73,16 +82,16 @@ module RubyUptime
 
     def successful?(eval_id)
       # TODO: Implement success criteria checking
-      status = @requests[eval_id][:resp].status
-      body = @requests[eval_id][:resp].to_s
+      status = @requests[eval_id][:resp].code
+      body = @requests[eval_id][:resp].body.to_s
 
-      @requests[eval_id][:resp].status.success?
+      @requests[eval_id][:resp].code == 200
     end
 
     def on_success(eval_id)
       # TODO: Implement counter reset
       response = @requests[eval_id][:resp]
-      status = response.status
+      status = response.code
       body = response.body
       duration = @requests[eval_id][:duration]
       logger.info(
@@ -113,10 +122,17 @@ module RubyUptime
       @timeout = @user_defined_config['timeout'] || AppConfig.check_defaults.timeout
       @success_criteria = @user_defined_config['success_criteria'] || AppConfig.check_defaults.success_criteria
       # TODO: Looks like we'll need a different HTTP client for SSL certs - big pain in the butt
-      @http = HTTP
-        .headers(@headers)
-        .follow(max_hops: 5)
-        .timeout(@timeout)
+      @http = Net::HTTP.new(@uri.host, @uri.port).tap do |client|
+        client.use_ssl = @protocol == 'https'
+        # don't think a total timeout is possible with Net::HTTP
+        client.open_timeout = @timeout
+        client.read_timeout = @timeout
+      end
+            
+      # @http = HTTP
+      #   .headers(@headers)
+      #   .follow(max_hops: 5)
+      #   .timeout(@timeout)
       @requests = {}
     end
 
@@ -124,9 +140,9 @@ module RubyUptime
       host = @user_defined_config['host']
       raise ArgumentError('No host provided') unless host
 
-      protocol = @user_defined_config['protocol'] || AppConfig.check_defaults.protocol
+      @protocol = @user_defined_config['protocol'] || AppConfig.check_defaults.protocol
       endpoint = @user_defined_config['endpoint'] || AppConfig.check_defaults.endpoint
-      URI("#{protocol}://#{host}#{endpoint}")
+      URI.parse("#{@protocol}://#{host}#{endpoint}")
     end
   end
 end
