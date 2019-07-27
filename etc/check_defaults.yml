@@ -8,3 +8,4 @@ headers:
   User-Agent: 'RubyUptime/1.0.0'
 success_criteria:
   - status: 200
+error_threshold: 1

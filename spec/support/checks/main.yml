@@ -4,9 +4,17 @@ testland:
   host: config.lab.testland.auth0.com
 
 http-test:
-  name: Testland Lab
+  name: Testland Lab HTTP
   host: config.lab.testland.auth0.com
+  protocol: http
 
+mult-fails:
+  name: Testland Lab Multiple Failures
+  host: config.lab.testland.auth0.com
+  success_criteria:
+    status: 200
+    error_threshold: 3
+  frequency: 0
 
 testland-missing-name:
   host: config.lab-2.testland.auth0.com

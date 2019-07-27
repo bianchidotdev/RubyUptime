@@ -9,7 +9,7 @@ RSpec.describe RubyUptime::Check do
         expect(subject.valid?).to be(true)
         expect(subject.uri.to_s).to eq('https://config.lab.testland.auth0.com/testall')
         expect(subject.frequency).to eq(30)
-        expect(subject.success_criteria).to eq([{"body"=>"OK", "status"=>200}])
+        expect(subject.success_criteria).to eq([{"body"=>"OK", "counter"=>1, "error_threshold"=>1, "status"=>200}])
       end
     end
 
@@ -22,7 +22,7 @@ RSpec.describe RubyUptime::Check do
         expect(subject.uri.to_s).to eq('https://config.lab.testland.auth0.com/testall')
         expect(subject.frequency).to eq(10)
         expect(subject.headers).to eq({'User-Agent' => 'RubyUptime/1.0.0'})
-        expect(subject.success_criteria).to eq([{"body"=>"OK", "status"=>200}])
+        expect(subject.success_criteria).to eq([{"body"=>"OK", "counter"=>1, "error_threshold"=>1, "status"=>200}])
       end
     end
 
@@ -34,7 +34,7 @@ RSpec.describe RubyUptime::Check do
         expect(subject.valid?).to be(true)
         expect(subject.uri.to_s).to eq('https://config.lab.testland.auth0.com/testall')
         expect(subject.frequency).to eq(60)
-        expect(subject.success_criteria).to eq([{"status"=>200}])
+        expect(subject.success_criteria).to eq([{"counter"=>1, "error_threshold"=>1, "status"=>200}])
 
         headers = {
           'Host' => 'a0-1.config.lab.testland.auth0.com',
@@ -103,7 +103,7 @@ RSpec.describe RubyUptime::Check do
       end
 
       it 'has success_criteria' do
-        expect(subject.success_criteria).to eq([{"body"=>"OK", "status"=>200}])
+        expect(subject.success_criteria).to eq([{"body"=>"OK", "counter"=>1, "error_threshold"=>1, "status"=>200}])
       end
 
       it 'passes if ALL success criteria pass' do
@@ -138,10 +138,45 @@ RSpec.describe RubyUptime::Check do
   end
 
   describe '#on_success' do
-    # TODO: Make sure it resets failure counter
+    subject { Check.new('mult-fails') }
+
+    before do
+      subject.success_criteria.first['counter'] = 2
+      allow(subject).to receive(:remove_request).and_return(true)
+      stub = stub_request(:get, subject.uri).
+        to_return(status: 200, body: 'OK', headers: {})
+      subject.eval
+      expect(stub).to have_been_requested
+    end
+
+    
+    it 'resets counter for multiple failure check' do
+      expect(subject.success_criteria.first['counter']).to eq(3)
+    end
   end
 
   describe '#on_failure' do
-    # TODO: Make sure it respects and decrements failure counter
+    subject { Check.new('mult-fails') }
+
+    before do
+      allow(subject).to receive(:remove_request).and_return(true)
+      stub = stub_request(:get, subject.uri).
+        to_return(status: 500, body: 'OK', headers: {})
+      subject.eval
+      expect(stub).to have_been_requested
+    end
+
+    it 'decrements counter and triggers an alert' do
+      expect(subject.success_criteria.first['counter']).to eq(2)
+      subject.eval
+      expect(subject.success_criteria.first['counter']).to eq(1)
+
+      expect(subject).to receive(:alert)
+      subject.eval
+      expect(subject.success_criteria.first['counter']).to eq(0)
+    end
+  end
+
+  describe '#alert' do
   end
 end

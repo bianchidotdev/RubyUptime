@@ -44,7 +44,11 @@ module RubyUptime
 
       start_request(eval_id)
 
-      successful?(eval_id) ? on_success(eval_id) : on_failure(eval_id)
+      if successful?(eval_id)
+        logger.debug("Check successful - #{@name} with eval_id #{eval_id}")
+      else
+        logger.warn("Check failed - #{@name} with eval_id #{eval_id}")
+      end
 
       remove_request(eval_id)
       true
@@ -59,7 +63,7 @@ module RubyUptime
       cert = nil
       resp = @http.start do |conn|
         resp = conn.get(@uri.request_uri)
-        cert = conn.peer_cert if @uri.port == 443
+        cert = conn.peer_cert if @uri.is_a?(URI::HTTPS) rescue nil
         resp
       end
       logger.error(resp.inspect)
@@ -72,7 +76,7 @@ module RubyUptime
       true
     rescue StandardError => e
       @requests[eval_id][:errors] = e
-      on_failure(eval_id)
+      @success_criteria.each_with_index { |_sc, i| on_failure(eval_id, i) }
       false
     end
 
@@ -84,27 +88,63 @@ module RubyUptime
       # TODO: Implement success criteria checking
       status = @requests[eval_id][:resp].code
       body = @requests[eval_id][:resp].body.to_s
+      cert = @requests[eval_id][:cert]
+      duration = @requests[eval_id][:duration]
 
-      @requests[eval_id][:resp].code == 200
+      results = []
+      results = @success_criteria.map do |sc|
+        res = []
+        res << (status == sc['status']) unless sc['status'].nil?
+        res << body.include?(sc['body']) unless sc['body'].nil?
+        res << cert_healthy?(cert, sc['ssl'])
+        res << duration < sc['max_response_time'] unless sc['max_response_time'].nil?
+        res.all?
+      end
+
+      @requests[eval_id][:results] = results
+      results.each_with_index do |res, i|
+        on_success(eval_id, i) if res
+        on_failure(eval_id, i) unless res
+      end
+      # returns false if any are false
+      results.all?
     end
 
-    def on_success(eval_id)
-      # TODO: Implement counter reset
+    def on_success(eval_id, i)
       response = @requests[eval_id][:resp]
       status = response.code
       body = response.body
       duration = @requests[eval_id][:duration]
+
+      @success_criteria[i]['counter'] = @success_criteria[i]['error_threshold']
       logger.info(
         "#{@last_time} - #{@id} - #{status} - #{body} - #{@next_time} - \
   #{duration.round(3)}s"
       )
     end
 
-    def on_failure(eval_id)
+    def on_failure(eval_id, i)
       # TODO: Implement counter decrement
-      logger.warn(
-        "Check #{@id} failed - #{@requests[eval_id]}"
-      )
+      @success_criteria[i]['counter'] -= 1
+      if @success_criteria[i]['counter'] > 0
+        logger.warn(
+          "Check #{@id} failed - #{@requests[eval_id]} - #{@success_criteria[i]['counter']} of #{@success_criteria[i]['error_threshold']} failures before alarm"
+        )
+      else
+        logger.warn(
+          "Check #{@id} failed - #{@requests[eval_id]}"
+        )
+        alert(i)
+      end
+    end
+
+    def alert(i)
+    # TODO: Implement integrations
+    end
+
+    def cert_healthy?(_cert, _ssl_criteria)
+    # TODO: Implement cert checking
+    true
     end
 
     private
@@ -121,9 +161,15 @@ module RubyUptime
       @frequency = @user_defined_config['frequency'] || AppConfig.check_defaults.frequency
       @timeout = @user_defined_config['timeout'] || AppConfig.check_defaults.timeout
       @success_criteria = @user_defined_config['success_criteria'] || AppConfig.check_defaults.success_criteria
-      # TODO: Looks like we'll need a different HTTP client for SSL certs - big pain in the butt
+      @success_criteria = @success_criteria.map do |sc|
+        sc['error_threshold'] = sc['error_threshold'] || AppConfig.check_defaults.error_threshold
+        sc['counter'] = sc['error_threshold']
+        sc
+      end
+
+      # Needed to switch to Net::HTTP from httprb to handle server cert checking
       @http = Net::HTTP.new(@uri.host, @uri.port).tap do |client|
-        client.use_ssl = @protocol == 'https'
+        client.use_ssl = @uri.is_a?(URI::HTTPS)
         # don't think a total timeout is possible with Net::HTTP
         client.open_timeout = @timeout
         client.read_timeout = @timeout

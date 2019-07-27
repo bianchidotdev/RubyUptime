@@ -54,10 +54,7 @@ RSpec.describe RubyUptime::UserConfig do
       expect(check['name']).to eq('Testland Lab')
       expect(check['host']).to eq('config.lab.testland.auth0.com')
       expect(check['protocol']).to eq('https')
-      expect(check['success_criteria']).to eq([{
-        'body' => "OK",
-        'status' => 200
-      }])
+      expect(check['success_criteria']).to eq([{"body"=>"OK", "counter"=>1, "error_threshold"=>1, "status"=>200}])
       expect(check['endpoint']).to eq('/testall')
       # no user-defined frequency - will pick up system default
       expect(check['frequency']).to be_nil
@@ -68,18 +65,13 @@ RSpec.describe RubyUptime::UserConfig do
       prod_check = @checks['testland-prod']
 
       expect(dev_check['protocol']).to eq('https')
-      expect(dev_check['success_criteria']).to eq([{
-        'status' => 200
-      }])
+      expect(dev_check['success_criteria']).to eq([{"counter"=>1, "error_threshold"=>1, "status"=>200}])
       expect(dev_check['endpoint']).to eq('/testall')
       expect(dev_check['frequency']).to eq(60)
       expect(dev_check['headers']).to eq({'Host' => 'a0-1.config.lab.testland.auth0.com'})
 
       expect(prod_check['protocol']).to eq('https')
-      expect(prod_check['success_criteria']).to eq([{
-        'body' => "OK",
-        'status' => 200
-      }])
+      expect(prod_check['success_criteria']).to eq([{"body"=>"OK", "counter"=>1, "error_threshold"=>1, "status"=>200}])
       expect(prod_check['endpoint']).to eq('/testall')
       expect(prod_check['frequency']).to eq(10)
     end
@@ -89,8 +81,8 @@ RSpec.describe RubyUptime::UserConfig do
       array_check = @checks['testland']
       string_check = @checks['string-success-criteria']
 
-      expect(hash_check['success_criteria']).to eq([{"status"=>200}])
-      expect(array_check['success_criteria']).to eq([{"body"=>"OK", "status"=>200}])
+      expect(hash_check['success_criteria']).to eq([{"counter"=>1, "error_threshold"=>1, "status"=>200}])
+      expect(array_check['success_criteria']).to eq([{"body"=>"OK", "counter"=>1, "error_threshold"=>1, "status"=>200}])
       expect(string_check['success_criteria']).to eq(nil)
     end
   end
