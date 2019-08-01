@@ -38,3 +38,19 @@ string-success-criteria:
   name: Test check with junk success criteria
   host: config.lab.testland.auth0.com
   success_criteria: "test"
+
+ssl-success-criteria:
+  name: Test check to be used with cert checking
+  host: config.lab.testland.auth0.com
+  success_criteria:
+    - status: 200
+      error_threshold: 3
+      alert: 
+        - slack-alerts
+        - pager-duty-psaas
+    - ssl:
+        expiry: 1209600     # 14 * 24 * 60 * 60
+      alert: email-ssl-alerts
+    - ssl:
+        valid: true
+      alert: pager-duty-psaas

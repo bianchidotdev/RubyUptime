@@ -10,8 +10,8 @@ RSpec.describe RubyUptime::CheckManager do
 	describe '#create_checks' do
 		subject { CheckManager.new }
 		it 'creates all valid checks' do
-			expect(subject.checks.count).to be(9)
-			expect(subject.checks.map(&:valid?)).to eq(Array.new(9, true))
+			expect(subject.checks.count).to be(10)
+			expect(subject.checks.map(&:valid?)).to eq(Array.new(10, true))
 		end
 	end
 

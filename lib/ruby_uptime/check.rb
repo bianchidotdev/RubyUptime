@@ -66,6 +66,8 @@ module RubyUptime
         cert = conn.peer_cert if @uri.is_a?(URI::HTTPS) rescue nil
         resp
       end
+      # TODO: Rescue from invalid cert and set cert as failing
+      # https://github.com/jarthod/ssl-test/blob/master/lib/ssl-test.rb
       logger.error(resp.inspect)
 
       end_time  = Time.now.utc.to_f
@@ -85,8 +87,7 @@ module RubyUptime
     end
 
     def successful?(eval_id)
-      # TODO: Implement success criteria checking
-      status = @requests[eval_id][:resp].code
+      status = @requests[eval_id][:resp].code.to_i
       body = @requests[eval_id][:resp].body.to_s
       cert = @requests[eval_id][:cert]
       duration = @requests[eval_id][:duration]
@@ -96,12 +97,13 @@ module RubyUptime
         res = []
         res << (status == sc['status']) unless sc['status'].nil?
         res << body.include?(sc['body']) unless sc['body'].nil?
-        res << cert_healthy?(cert, sc['ssl'])
+        res << cert_healthy?(cert, sc['ssl']) unless sc['ssl'].nil? # implement ssl ignore
         res << duration < sc['max_response_time'] unless sc['max_response_time'].nil?
         res.all?
       end
 
       @requests[eval_id][:results] = results
+      # this seems like a lot, but it's required for having separate counters for different succcess criteria
       results.each_with_index do |res, i|
         on_success(eval_id, i) if res
         on_failure(eval_id, i) unless res
@@ -142,9 +144,17 @@ module RubyUptime
     # TODO: Implement integrations
     end
 
-    def cert_healthy?(_cert, _ssl_criteria)
-    # TODO: Implement cert checking
-    true
+    def cert_healthy?(cert, ssl_criteria)
+      if ssl_criteria.key?('valid')
+        # store = OpenSSL::X509::Store.new
+        # store.set_default_paths # populates with some 'standard' ones
+        # store.verify(cert) == ssl_criteria['valid']
+      end
+      if ssl_criteria.key?('expiry')
+
+      end
+      # TODO: Implement cert checking
+      true
     end
 
     private

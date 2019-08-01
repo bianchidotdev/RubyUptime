@@ -1,5 +1,9 @@
 RSpec.describe RubyUptime::Check do
 
+  def instantiate_cert(cert_type)
+    # OpenSSL::X509::Certificate.new(File.read("#{PROJECT_ROOT}/spec/support/certificates/#{cert_type}.pem"))
+  end
+
   describe '#new' do
     context 'check without specified default' do
       subject { Check.new('testland') }
@@ -134,6 +138,38 @@ RSpec.describe RubyUptime::Check do
 
         expect(subject.successful?(eval_id)).to eq(false)
       end
+    end
+    context 'ssl checks status failures' do
+      subject { Check.new('ssl-success-criteria') }
+
+      before do
+        allow(subject).to receive(:remove_request).and_return(true)
+        stub = stub_request(:get, subject.uri).
+          to_return(status: 500, body: 'OK', headers: {})
+        subject.eval
+        expect(stub).to have_been_requested
+      end
+      it 'TODO' do
+      end
+    end
+
+    context 'invalid cert triggers alert immediately' do
+      subject { Check.new('ssl-success-criteria') }
+      let(:cert) { instantiate_cert('invalid') }
+
+      before do
+        allow(subject).to receive(:remove_request).and_return(true)
+        allow_any_instance_of(Net::HTTP).to receive(:peer_cert).and_return(cert)
+        stub = stub_request(:get, subject.uri).
+          to_return(status: 200, body: 'OK', headers: {})
+        subject.eval
+        expect(stub).to have_been_requested
+      end
+
+      # it 'triggers pagerduty immediately' do
+      # #   TODO: Finish
+      # end
+
     end
   end
 
