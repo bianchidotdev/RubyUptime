@@ -123,6 +123,7 @@ module RubyUptime
         "#{@last_time} - #{@id} - #{status} - #{body} - #{@next_time} - \
   #{duration.round(3)}s"
       )
+      # TODO: Success message to pagerduty
     end
 
     def on_failure(eval_id, i)

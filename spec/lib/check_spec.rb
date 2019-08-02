@@ -144,13 +144,18 @@ RSpec.describe RubyUptime::Check do
 
       before do
         allow(subject).to receive(:remove_request).and_return(true)
-        stub = stub_request(:get, subject.uri).
+        @stub = stub_request(:get, subject.uri).
           to_return(status: 500, body: 'OK', headers: {})
-        subject.eval
-        expect(stub).to have_been_requested
+        allow(subject).to receive(:ready?).and_return(true)
       end
-      it 'TODO' do
+      
+      it 'receives a call to the alert function and calls the integrations' do
+        expect(subject).to receive(:alert).and_call_original
+        3.times { subject.eval }
+        expect(@stub).to have_been_requested.times(3)
+        # TODO: Expect integrations to be called
       end
+
     end
 
     context 'invalid cert triggers alert immediately' do

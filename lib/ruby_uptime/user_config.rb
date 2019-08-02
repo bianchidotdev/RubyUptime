@@ -7,7 +7,8 @@ class RubyUptime::UserConfig
   attr_reader :config_files
 
   def initialize
-    @config_files = files
+    @config_files = check_files
+    @integration_config_files = integration_files
   end
 
   def checks
@@ -17,20 +18,47 @@ class RubyUptime::UserConfig
     end
   end
 
+  def integrations
+    @integrations ||=begin
+      integration_config
+      # TODO: Load integrations
+    end
+  end
+
   def [](key)
     checks[key]
   end
 
   private
 
-  def files
-    @files ||=begin
+  def check_files
+    @check_files ||=begin
       dir = AppConfig.paths.check_config_dir
       files = Dir["#{dir}/**/*.yml*"]
       files << Dir["#{dir}/**/*.json"]
       files.delete(default_config_path)
       logger.debug("Found check config files #{files.join(", ")}")
       files.flatten
+    end
+  end
+
+  def integration_files
+    @integration_files ||=begin
+      dir = AppConfig.paths.integration_config_dir
+      files = Dir["#{dir}/**/*.yml*"]
+      files << Dir["#{dir}/**/*.json"]
+      logger.debug("Found integration config files #{files.join(", ")}")
+      files.flatten
+    end
+  end
+
+  def integration_config
+    @check_config ||=begin
+      integration_array = integration_files.map { |file| load_file(file) }.reject{ |c| !c }
+      integration_keys = integration_array.flat_map { |e| e.keys }
+      dups = integration_keys.group_by{ |e| e }.keep_if{ |_, e| e.length > 1 }
+      logger.warn("Duplicate integrations exist! There may be strange merging behavior: #{dups.keys.join(', ')}") unless dups.empty?
+      integration_array.reduce(:merge)
     end
   end
 
@@ -44,7 +72,7 @@ class RubyUptime::UserConfig
 
   def check_config
     @check_config ||=begin
-      checks_array = files.map { |file| load_file(file) }.reject{ |c| !c }
+      checks_array = check_files.map { |file| load_file(file) }.reject{ |c| !c }
       checks_keys = checks_array.flat_map { |e| e.keys }
       dups = checks_keys.group_by{ |e| e }.keep_if{ |_, e| e.length > 1 }
       logger.warn("Duplicate checks exist! There may be strange merging behavior: #{dups.keys.join(', ')}") unless dups.empty?
