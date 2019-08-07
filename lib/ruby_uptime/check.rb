@@ -7,7 +7,7 @@ module RubyUptime
   class Check
 
     attr_accessor :last_time
-    attr_reader :next_time, :id, :name, :uri, :requests, :error, :frequency, :headers, :success_criteria
+    attr_reader :next_time, :id, :name, :uri, :requests, :error, :frequency, :headers, :success_criteria, :integrations
 
     def self.log_header
       logger.info(
@@ -118,27 +118,42 @@ module RubyUptime
       body = response.body
       duration = @requests[eval_id][:duration]
 
+      # determine if it's a recovery if the previous counter 
+      recovery = success_criteria[i]['counter'].positive? ? false : true
       @success_criteria[i]['counter'] = @success_criteria[i]['error_threshold']
       logger.info(
         "#{@last_time} - #{@id} - #{status} - #{body} - #{@next_time} - \
   #{duration.round(3)}s"
       )
+      store_results(eval_id, true)
       # TODO: Success message to pagerduty
+      alert_recovery if recovery
     end
 
     def on_failure(eval_id, i)
       # TODO: Implement counter decrement
       @success_criteria[i]['counter'] -= 1
-      if @success_criteria[i]['counter'] > 0
+      num = @success_criteria[i]['counter']
+      case
+      when num.positive?
         logger.warn(
           "Check #{@id} failed - #{@requests[eval_id]} - #{@success_criteria[i]['counter']} of #{@success_criteria[i]['error_threshold']} failures before alarm"
         )
-      else
+      when num.negative?
         logger.warn(
-          "Check #{@id} failed - #{@requests[eval_id]}"
+          "Check #{@id} failed - #{@requests[eval_id]} - check already in failure state"
+        )
+      when num.zero?
+        logger.warn(
+          "Check #{@id} failed - #{@requests[eval_id]} - alerting!"
         )
         alert(i)
       end
+      store_results(eval_id, false)
+    end
+
+    def store_results(eval_id, success_status)
+      # TODO: implement DB and such
     end
 
     def alert(i)
@@ -176,6 +191,12 @@ module RubyUptime
         sc['error_threshold'] = sc['error_threshold'] || AppConfig.check_defaults.error_threshold
         sc['counter'] = sc['error_threshold']
         sc
+      end
+      check_integrations = @user_defined_config['integrations']
+      if check_integrations
+        @integrations = check_integrations.map do |int_config|
+          RubyUptime::Integration.new(int_config)
+        end
       end
 
       # Needed to switch to Net::HTTP from httprb to handle server cert checking

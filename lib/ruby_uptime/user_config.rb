@@ -19,10 +19,7 @@ class RubyUptime::UserConfig
   end
 
   def integrations
-    @integrations ||=begin
-      integration_config
-      # TODO: Load integrations
-    end
+    @integrations ||=integration_config
   end
 
   def [](key)
@@ -53,7 +50,7 @@ class RubyUptime::UserConfig
   end
 
   def integration_config
-    @check_config ||=begin
+    @integration_config ||=begin
       integration_array = integration_files.map { |file| load_file(file) }.reject{ |c| !c }
       integration_keys = integration_array.flat_map { |e| e.keys }
       dups = integration_keys.group_by{ |e| e }.keep_if{ |_, e| e.length > 1 }

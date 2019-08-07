@@ -2,6 +2,8 @@
 testland-dev:
   name: Testland Lab
   host: config.lab.testland.auth0.com
+  integrations:
+    - slack-alerts
 
 testland-dev-1:
   name: Testland Lab 1

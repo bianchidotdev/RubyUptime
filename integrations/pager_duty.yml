@@ -35,4 +35,3 @@ pager-duty-psaas:
         "client": "Sample Monitoring Service",
         "client_url": "https://monitoring.example.com"
       }
-  on_success:
