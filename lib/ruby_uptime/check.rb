@@ -92,17 +92,25 @@ module RubyUptime
       cert = @requests[eval_id][:cert]
       duration = @requests[eval_id][:duration]
 
-      results = []
+      raw_results = []
       results = @success_criteria.map do |sc|
         res = []
+        raw_res = []
         res << (status == sc['status']) unless sc['status'].nil?
+        raw_res << {status: {expected: sc['status'], got: status}} unless sc['status'].nil?
         res << body.include?(sc['body']) unless sc['body'].nil?
-        res << cert_healthy?(cert, sc['ssl']) unless sc['ssl'].nil? # implement ssl ignore
+        raw_res << {body: {expected: sc['body'], got: body}} unless sc['body'].nil?
+        cert_health, cert_errors = cert_healthy?(cert, sc['ssl']) unless sc['ssl'].nil?
+        res << cert_health unless sc['ssl'].nil? # implement ssl ignore
+        raw_res << {ssl: {expected: true, got: cert_health, errors: cert_errors}} unless sc['ssl'].nil?
         res << duration < sc['max_response_time'] unless sc['max_response_time'].nil?
+        raw_res << {duration: {expected: sc['max_response_time'], got: duration}} unless sc['max_response_time'].nil?
+        raw_results << raw_res
         res.all?
       end
 
       @requests[eval_id][:results] = results
+      @requests[eval_id][:raw_results] = raw_results
       # this seems like a lot, but it's required for having separate counters for different succcess criteria
       results.each_with_index do |res, i|
         on_success(eval_id, i) if res
@@ -127,7 +135,7 @@ module RubyUptime
       )
       store_results(eval_id, true)
       # TODO: Success message to pagerduty
-      alert_recovery if recovery
+      alert_recovery(i) if recovery
     end
 
     def on_failure(eval_id, i)
@@ -157,7 +165,14 @@ module RubyUptime
     end
 
     def alert(i)
+      integration_keys = @success_criteria[i]['integrations']
+      integration_keys.each do |int_key|
+        @integrations[int_key].trigger
+      end
     # TODO: Implement integrations
+    end
+
+    def alert_recovery(i)
     end
 
     def cert_healthy?(cert, ssl_criteria)
@@ -194,8 +209,9 @@ module RubyUptime
       end
       check_integrations = @user_defined_config['integrations']
       if check_integrations
-        @integrations = check_integrations.map do |int_config|
-          RubyUptime::Integration.new(int_config)
+        @integrations = {}
+        check_integrations.each do |int_config|
+          @integrations[int_config] = RubyUptime::Integration.new(int_config)
         end
       end
 

@@ -3,6 +3,7 @@ module RubyUptime
 		attr_reader :integration_config
 
 		def initialize(integration_key)
+			@key = integration_key
 			@valid = true
 			defined_integrations = UserConfig.instance.integrations
 			if defined_integrations.key?(integration_key)
@@ -18,7 +19,35 @@ module RubyUptime
       @valid = false
 		end
 
+		def trigger(check, sc_index, eval_id, success_status)
+			errors = compile_errors(check, sc_index, eval_id)
+			form_payload(check, eval_id, errors, success_status)
+			binding.pry
+		end
+
 		private
+
+		def compile_errors(check, sc_index, eval_id)
+			check.requests[eval_id][:raw_results][sc_index]
+		end
+
+		def form_payload(check, eval_id, errors, success_status)
+			type = success_status ? 'on_success' : 'on_failure'
+			raw_results = check.requests[eval_id][:raw_results][sc_index]
+
+			check_id = check.id
+			check_name = check.name
+			check_status = raw_results.dig(:status, :got)
+			check_body = raw_results.dig(:body, :got)
+
+			formatted_body = @body
+			formatted_body.gsub!('#{check_id}', check_id)
+			formatted_body.gsub!('#{check_name}', check_name)
+			formatted_body.gsub!('#{check_status}', check_status)
+			formatted_body.gsub!('#{check_body}', check_body)
+			# formatted_body.gsub!('#{ssl_errors}', ssl_errors)
+
+		end
 
 		def configure_integration
 			if @integration_config.key?('on_failure')

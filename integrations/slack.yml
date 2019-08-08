@@ -22,11 +22,11 @@ slack-alerts:
                         "value": "#{check_status}",
                         "short": false
                     },
-            {
-              "title": "Body",
-              "value": "#{check_body}",
-              "short": false
-            }
+                    {
+                      "title": "Body",
+                      "value": "#{check_body}",
+                      "short": false
+                    }
                 ],
                 "footer": "Slack API",
                 "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png",
